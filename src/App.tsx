@@ -18,7 +18,7 @@ export default function App(){
   const [transfers,setTransfers]=useState<Transfer[]>([]);const [transferEmail,setTransferEmail]=useState('');const [sharedLink,setSharedLink]=useState('');const [busy,setBusy]=useState(false);
   const editSeq=useRef(0);const inFlight=useRef(false);const draftRef=useRef<Workout|null>(null);draftRef.current=draft;
   const actor=ctx?.profile;
-  async function loadContext(){try{const c=await getContext(demo,role);setCtx(c);setProfileName(c.profile.name);setProfileUnit(c.profile.unit);setClient(c.is_trainer?c.clients[0]?.id||'':c.is_client?c.profile.id:'');}catch(e){setAuthError(String((e as Error).message));}finally{setLoading(false);}}
+  async function loadContext(){try{const c=await getContext(demo,role);setCtx(c);setProfileName(c.profile.name);setProfileUnit(c.profile.unit);setClient(c.is_trainer?c.clients[0]?.id||'':c.is_client?c.profile.id:'');if(!demo&&c.is_trainer){sessionStorage.removeItem('setbook-transfer');setPendingTransfer('');if(new URLSearchParams(window.location.search).has('transfer'))window.history.replaceState({},'',window.location.pathname);}}catch(e){setAuthError(String((e as Error).message));}finally{setLoading(false);}}
   useEffect(()=>{let active=true;setLoading(true);setDraft(null);setDirty(false);setWorkouts([]);setSaveError('');setCtx(null);
     if(demo){void loadContext();return;}
     if(!supabase){setLoading(false);return;}
@@ -45,7 +45,7 @@ export default function App(){
   async function doSignIn(){setAuthError('');try{await signIn();}catch(e){setAuthError((e as Error).message);}}
   async function signOut(){if(!canLeave())return;if(demo){setDemo(false);setRole('client');setCtx(null);}else await supabase?.auth.signOut();setDraft(null);setClient('');setScreen('workout');}
   async function join(){setJoining(true);try{await rpc('update_profile',{p_name:profileName,p_unit:profileUnit});await rpc('join_group',{p_token:pendingJoin});sessionStorage.removeItem('setbook-join');setPendingJoin('');window.history.replaceState({},'', '/');await loadContext();setMessage('You’re in. Your training starts here.');}catch(e){setMessage((e as Error).message);}finally{setJoining(false);}}
-  async function acceptTransfer(){setJoining(true);try{await rpc('accept_transfer',{p_token:pendingTransfer});sessionStorage.removeItem('setbook-transfer');setPendingTransfer('');await loadContext();setMessage('Accepted. The owner can now confirm your trainer access.');}catch(e){setMessage((e as Error).message);}finally{setJoining(false);}}
+  async function acceptTransfer(){setJoining(true);try{await rpc('accept_transfer',{p_token:pendingTransfer});sessionStorage.removeItem('setbook-transfer');setPendingTransfer('');window.history.replaceState({},'',window.location.pathname);await loadContext();setMessage('Accepted. The owner can now confirm your trainer access.');}catch(e){setMessage((e as Error).message);}finally{setJoining(false);}}
   async function settingsAction(action:()=>Promise<void>){setBusy(true);try{await action();}catch(e){setMessage((e as Error).message);}finally{setBusy(false);}}
   useEffect(()=>{if(screen==='settings'&&ctx?.is_owner&&!demo)getTransfers().then(setTransfers).catch(e=>setMessage(e.message));},[screen,ctx,demo]);
   const selected=ctx?.clients.find(c=>c.id===client)||actor;

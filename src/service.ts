@@ -30,6 +30,6 @@ export async function saveWorkout(demo: boolean,w: Workout,actor: Profile): Prom
   const saved={...w,revision:w.revision+1,updated_at:new Date().toISOString(),updated_by:actor.id,editor_name:actor.name};d.workouts=[saved,...d.workouts.filter(x=>x.id!==w.id)];localStorage.setItem(DEMO_KEY,JSON.stringify(d));return saved;
 }
 export async function updateProfile(demo: boolean,p: Profile) { if(demo) {const d=demoRead(); d.profiles=d.profiles.map(x=>x.id===p.id?p:x);localStorage.setItem(DEMO_KEY,JSON.stringify(d));} else await rpc('update_profile',{p_name:p.name,p_unit:p.unit}); }
-export async function signIn() { if(!supabase) throw new Error('Supabase has not been configured.'); const {error}=await supabase.auth.signInWithOAuth({provider:'google',options:{redirectTo:window.location.origin+'/auth/callback'}}); if(error) throw error; }
+export async function signIn() { if(!supabase) throw new Error('Supabase has not been configured.'); const {error}=await supabase.auth.signInWithOAuth({provider:'google',options:{redirectTo:window.location.origin+'/auth/callback',queryParams:{prompt:'select_account'}}}); if(error) throw error; }
 export async function getTransfers(): Promise<Transfer[]> { return rpc('list_transfers'); }
 export const demoToday = today;
